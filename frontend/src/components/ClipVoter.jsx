@@ -282,26 +282,36 @@ export default function ClipVoter() {
 
       {/* ---------- VOTING ---------- */}
       {phase === PHASE.VOTING && clips.length === 3 && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center px-8 pt-14 pb-10 gap-10 fade-in">
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center px-8 gap-8 fade-in">
+
+          {/* Top title */}
+          <div className="text-center">
+            <div className="text-4xl md:text-5xl font-extrabold tracking-tight neon-pulse" style={{ color: "#00ff9d", textShadow: "0 0 24px rgba(0,255,157,0.55)" }}>
+              Yayın birazdan düzelecek
+            </div>
+            <div className="mt-2 text-[11px] tracking-[0.45em] uppercase text-white/45">
+              Kazanan klip birazdan oynatılacak
+            </div>
+          </div>
 
           {/* Countdown + prompt */}
-          <div className="flex items-center gap-5 px-6 py-4 rounded-2xl border border-white/10 bg-black/50 backdrop-blur-md">
+          <div className="flex items-center gap-6 px-8 py-5 rounded-2xl border border-white/10 bg-black/50 backdrop-blur-md">
             <div className="flex flex-col items-center leading-none">
-              <span data-testid="countdown-text" className="mono text-5xl font-extrabold text-[#00ff9d] tabular-nums" style={{ textShadow: "0 0 18px rgba(0,255,157,0.55)" }}>
+              <span data-testid="countdown-text" className="mono text-6xl font-extrabold text-[#00ff9d] tabular-nums" style={{ textShadow: "0 0 22px rgba(0,255,157,0.6)" }}>
                 {Math.ceil(remaining)}
               </span>
-              <span className="text-[10px] tracking-[0.35em] uppercase text-white/50 mt-1">saniye</span>
+              <span className="text-[10px] tracking-[0.35em] uppercase text-white/50 mt-1.5">saniye</span>
             </div>
-            <div className="h-14 w-px bg-white/10" />
+            <div className="h-16 w-px bg-white/10" />
             <div>
-              <div className="text-xl md:text-2xl font-bold">
+              <div className="text-3xl md:text-4xl font-bold leading-tight">
                 Chatte <span className="text-[#00ff9d]">1</span>, <span className="text-[#b445ff]">2</span> veya <span className="text-[#ffe14a]">3</span> yaz!
               </div>
-              <div className="text-xs text-white/50 mt-1 tracking-wide">En çok oy alan klip oynatılacak</div>
+              <div className="text-sm text-white/55 mt-1.5 tracking-wide">En çok oy alan klip oynatılacak</div>
             </div>
-            <div className="h-14 w-px bg-white/10" />
-            <div className="flex items-center gap-2 text-xs mono text-white/70">
-              <Zap size={14} className="text-[#00ff9d]" />
+            <div className="h-16 w-px bg-white/10" />
+            <div className="flex items-center gap-2 text-sm mono text-white/80">
+              <Zap size={16} className="text-[#00ff9d]" />
               <span data-testid="total-votes">{totalVotes} oy</span>
             </div>
           </div>
