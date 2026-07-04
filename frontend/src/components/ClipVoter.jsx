@@ -120,7 +120,7 @@ export default function ClipVoter() {
 
   // ---- Pusher WebSocket for Kick chat ----
   useEffect(() => {
-    if (phase !== PHASE.VOTING) return;
+    if (phase !== PHASE.VOTING && phase !== PHASE.PLAYING && phase !== PHASE.REVEALING) return;
     const chatroomId = chatroomIdRef.current;
     if (!chatroomId) return;
 
