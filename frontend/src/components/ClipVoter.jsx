@@ -12,8 +12,37 @@ const PUSHER_CLUSTER = "us2";
 const PHASE = {
   WAKING: "waking",
   VOTING: "voting",
+  REVEALING: "revealing",
   PLAYING: "playing",
   ERROR: "error",
+};
+
+// ---- Tiny Web Audio sound engine (no external files, no bandwidth) ----
+let _ac = null;
+const getAc = () => {
+  if (!_ac) {
+    try { _ac = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch { _ac = null; }
+  }
+  return _ac;
+};
+const beep = (freq, dur = 0.15, type = "sine", gain = 0.15, when = 0) => {
+  const ac = getAc();
+  if (!ac) return;
+  const t = ac.currentTime + when;
+  const o = ac.createOscillator();
+  const g = ac.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(gain, t + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(ac.destination);
+  o.start(t); o.stop(t + dur + 0.02);
+};
+const SFX = {
+  tick: () => beep(1200, 0.05, "square", 0.06),
+  whoosh: () => { beep(180, 0.25, "sawtooth", 0.08); beep(320, 0.2, "sine", 0.05, 0.05); },
+  win: () => { beep(523, 0.12, "triangle", 0.18); beep(659, 0.12, "triangle", 0.18, 0.12); beep(880, 0.28, "triangle", 0.2, 0.24); },
 };
 
 function useQuery() {
@@ -139,23 +168,32 @@ export default function ClipVoter() {
   useEffect(() => {
     if (phase !== PHASE.VOTING) return;
     setRemaining(duration);
+    SFX.whoosh();
     const start = Date.now();
+    let lastTickSec = -1;
     timerRef.current = setInterval(() => {
       const passed = (Date.now() - start) / 1000;
       const left = Math.max(0, duration - passed);
       setRemaining(left);
+      // tick sound in final 3 seconds
+      const sec = Math.ceil(left);
+      if (sec <= 3 && sec > 0 && sec !== lastTickSec) {
+        lastTickSec = sec;
+        SFX.tick();
+      }
       if (left <= 0) {
         clearInterval(timerRef.current);
-        // pick winner
         const v = votesRef.current;
         let best = 1;
         if (v[2] > v[best]) best = 2;
         if (v[3] > v[best]) best = 3;
-        // tie -> if all zero, random
         const allZero = v[1] === 0 && v[2] === 0 && v[3] === 0;
         const winner = allZero ? (1 + Math.floor(Math.random() * 3)) : best;
         setWinnerIdx(winner);
-        setPhase(PHASE.PLAYING);
+        setPhase(PHASE.REVEALING);
+        SFX.win();
+        // 2s dramatic reveal → play
+        setTimeout(() => setPhase(PHASE.PLAYING), 2200);
       }
     }, 100);
     return () => clearInterval(timerRef.current);
@@ -365,6 +403,29 @@ export default function ClipVoter() {
               className="h-full bg-gradient-to-r from-[#00ff9d] via-[#7cffd0] to-[#b445ff] transition-[width] duration-100"
               style={{ width: `${timeRatio * 100}%`, boxShadow: "0 0 10px #00ff9d" }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* ---------- REVEALING (2s dramatic winner announcement) ---------- */}
+      {phase === PHASE.REVEALING && winnerIdx !== null && clips[winnerIdx - 1] && (
+        <div data-testid="reveal-screen" className="absolute inset-0 z-25 flex flex-col items-center justify-center gap-6">
+          <div className="reveal-flash" />
+          <div className="text-sm tracking-[0.5em] uppercase text-white/60 fade-in">Kazanan</div>
+          <div
+            className="reveal-number mono font-extrabold leading-none"
+            style={{
+              color: winnerIdx === 1 ? "#00ff9d" : winnerIdx === 2 ? "#b445ff" : "#ffe14a",
+              textShadow: `0 0 60px ${winnerIdx === 1 ? "#00ff9d" : winnerIdx === 2 ? "#b445ff" : "#ffe14a"}`,
+            }}
+          >
+            #{winnerIdx}
+          </div>
+          <div className="text-2xl md:text-3xl font-bold max-w-3xl truncate px-8 text-center fade-in">
+            {clips[winnerIdx - 1].title}
+          </div>
+          <div className="mono text-sm text-white/50">
+            {(votes[winnerIdx] || 0)} oy ile kazandı
           </div>
         </div>
       )}

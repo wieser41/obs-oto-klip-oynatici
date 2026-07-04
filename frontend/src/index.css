@@ -179,3 +179,27 @@ code, .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
     pointer-events: none;
     mix-blend-mode: overlay;
 }
+
+/* ---------- Winner reveal animation ---------- */
+@keyframes revealZoom {
+    0%   { transform: scale(0.2) rotate(-8deg); opacity: 0; letter-spacing: 0.5em; }
+    45%  { transform: scale(1.25) rotate(2deg); opacity: 1; letter-spacing: 0; }
+    70%  { transform: scale(1.0) rotate(0); }
+    100% { transform: scale(1.05) rotate(0); opacity: 1; }
+}
+.reveal-number {
+    font-size: clamp(120px, 22vw, 340px);
+    animation: revealZoom 900ms cubic-bezier(.2,1.4,.3,1) both;
+}
+@keyframes revealFlash {
+    0%   { opacity: 0; }
+    8%   { opacity: 0.9; }
+    100% { opacity: 0; }
+}
+.reveal-flash {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0.55), rgba(255,255,255,0) 55%);
+    pointer-events: none;
+    animation: revealFlash 700ms ease-out both;
+    z-index: 70;
+}
