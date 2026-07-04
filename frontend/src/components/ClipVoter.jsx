@@ -265,6 +265,16 @@ export default function ClipVoter() {
     };
   }, [phase, winnerIdx, clips, startNewRound]);
 
+  // ---- Heartbeat: keep the preview pod warm even during idle scenes ----
+  useEffect(() => {
+    const ping = () => {
+      axios.get(`${API}/`).catch(() => { /* ignore */ });
+    };
+    ping();
+    const iv = setInterval(ping, 4 * 60 * 1000); // every 4 min
+    return () => clearInterval(iv);
+  }, []);
+
   // ---- Kickoff on mount ----
   useEffect(() => {
     startNewRound();
