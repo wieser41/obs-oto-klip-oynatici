@@ -284,8 +284,8 @@ export default function ClipVoter() {
           <span className="text-xs tracking-[0.28em] uppercase text-white/80">Kick Klip Turnuvası</span>
         </div>
         {channel && (
-          <div data-testid="channel-badge" className="px-3 py-1.5 rounded-full border border-[#b445ff]/40 bg-[#b445ff]/10 text-xs tracking-widest uppercase mono">
-            /{channel}
+          <div data-testid="channel-badge" className="px-4 py-2 rounded-full border border-[#b445ff]/60 bg-gradient-to-r from-[#b445ff]/20 to-[#00ff9d]/10 text-base font-extrabold tracking-[0.15em] uppercase text-white" style={{ textShadow: "0 0 12px rgba(180,69,255,0.6)" }}>
+            {channel}
           </div>
         )}
       </div>
@@ -326,10 +326,7 @@ export default function ClipVoter() {
 
       {/* ---------- VOTING ---------- */}
       {phase === PHASE.VOTING && clips.length === 3 && (
-        <div
-          className="absolute inset-0 z-20 flex flex-col items-center justify-center px-8 gap-8 fade-in"
-          style={chatEnabled ? { paddingRight: 320 } : undefined}
-        >
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center px-8 gap-8 fade-in">
 
           {/* Top title */}
           <div className="text-center">
@@ -418,8 +415,8 @@ export default function ClipVoter() {
 
       {/* ---------- LIVE CHAT OVERLAY (right side, VOTING only) ---------- */}
       {chatEnabled && phase === PHASE.VOTING && (
-        <div data-testid="chat-overlay" className="absolute right-5 top-28 bottom-24 w-[270px] z-30 pointer-events-none flex flex-col justify-end gap-1.5 overflow-hidden fade-in">
-          <div className="text-[10px] tracking-[0.4em] uppercase text-white/40 mono mb-1 pl-1">Canlı Sohbet</div>
+        <div data-testid="chat-overlay" className="absolute right-5 top-20 w-[240px] max-h-[62vh] z-30 pointer-events-none flex flex-col gap-1.5 overflow-hidden rounded-2xl border border-[#00ff9d]/25 bg-black/35 backdrop-blur-md p-3 fade-in" style={{ boxShadow: "0 0 24px -8px rgba(0,255,157,0.25), inset 0 0 24px -12px rgba(180,69,255,0.15)" }}>
+          <div className="text-[10px] tracking-[0.4em] uppercase text-white/50 mono pb-1 border-b border-white/8">Canlı Sohbet</div>
           {chatFeed.slice(-10).map((m) => {
             const voteMatch = m.text.match(/^([123])\s*$/);
             const isVote = !!voteMatch;
