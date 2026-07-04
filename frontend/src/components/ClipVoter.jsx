@@ -52,12 +52,13 @@ function useQuery() {
       channel: (p.get("channel") || "").trim(),
       duration: Math.max(3, parseInt(p.get("duration") || "8", 10)),
       chat: (p.get("chat") || "on").toLowerCase() !== "off",
+      mode: (p.get("mode") || "afk").toLowerCase(),
     };
   }, []);
 }
 
 export default function ClipVoter() {
-  const { channel, duration, chat: chatEnabled } = useQuery();
+  const { channel, duration, chat: chatEnabled, mode } = useQuery();
   const [phase, setPhase] = useState(PHASE.WAKING);
   const [errorMsg, setErrorMsg] = useState("");
   const [clips, setClips] = useState([]);
@@ -343,8 +344,8 @@ export default function ClipVoter() {
 
           {/* Top title */}
           <div className="text-center">
-            <div className="text-4xl md:text-5xl font-extrabold tracking-tight neon-pulse" style={{ color: "#00ff9d", textShadow: "0 0 24px rgba(0,255,157,0.55)" }}>
-              Yayın birazdan düzelecek
+            <div className={`${mode === "start" ? "text-5xl md:text-7xl" : "text-4xl md:text-5xl"} font-extrabold tracking-tight neon-pulse`} style={{ color: "#00ff9d", textShadow: "0 0 24px rgba(0,255,157,0.55)" }}>
+              {mode === "start" ? "Yayın başlıyor" : "Yayın birazdan düzelecek"}
             </div>
             <div className="mt-2 text-[11px] tracking-[0.45em] uppercase text-white/45">
               Kazanan klip birazdan oynatılacak
