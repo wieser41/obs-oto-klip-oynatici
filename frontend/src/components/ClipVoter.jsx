@@ -307,7 +307,7 @@ export default function ClipVoter() {
           </div>
 
           {/* 3 clip cards horizontally */}
-          <div data-testid="clip-grid" className="w-full max-w-[1400px] grid grid-cols-3 gap-8 flex-1 items-stretch">
+          <div data-testid="clip-grid" className="w-full max-w-[1400px] grid grid-cols-3 gap-8 items-start">
             {clips.map((c, idx) => {
               const n = idx + 1;
               const accent = n === 1 ? "#00ff9d" : n === 2 ? "#b445ff" : "#ffe14a";
@@ -328,7 +328,7 @@ export default function ClipVoter() {
                       {(c.view_count || 0).toLocaleString("tr-TR")} Görüntülenme
                     </div>
                   </div>
-                  <div className="px-4 pt-3 pb-2 flex-1">
+                  <div className="px-4 pt-3 pb-3">
                     <div className="text-base font-semibold truncate">{c.title}</div>
                     <div className="text-[11px] mono text-white/50 mt-1 truncate">
                       {c.creator ? `@${c.creator}` : ""}
