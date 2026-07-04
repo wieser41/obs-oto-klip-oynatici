@@ -173,23 +173,30 @@ async def get_clips(channel: str, count: int = 3):
         combos = [
             ("view", "all"),
             ("view", "month"),
+            ("view", "week"),
             ("date", "all"),
+            ("date", "month"),
         ]
         pool: dict[str, dict] = {}
         last_error = None
         for sort, timeframe in combos:
-            try:
-                d = _fetch_json(
-                    f"/api/v2/channels/{channel}/clips?cursor=0&sort={sort}&time={timeframe}",
-                    referer=referer,
-                )
-            except HTTPException as e:
-                last_error = e
-                continue
-            for c in (d.get("clips") or []):
-                cid = c.get("id")
-                if cid and cid not in pool:
-                    pool[cid] = c
+            for cursor in (0, 20):
+                try:
+                    d = _fetch_json(
+                        f"/api/v2/channels/{channel}/clips?cursor={cursor}&sort={sort}&time={timeframe}",
+                        referer=referer,
+                    )
+                except HTTPException as e:
+                    last_error = e
+                    continue
+                for c in (d.get("clips") or []):
+                    cid = c.get("id")
+                    if cid and cid not in pool:
+                        pool[cid] = c
+                if len(pool) >= 60:
+                    break
+            if len(pool) >= 60:
+                break
         if not pool:
             if last_error:
                 raise last_error
