@@ -98,14 +98,15 @@ export default function ClipVoter() {
     resetRound();
     setPhase(PHASE.WAKING);
     try {
-      const [chRes, clipRes] = await Promise.all([
-        axios.get(`${API}/kick/channel/${channel}`),
+      const [chSettled, clipRes] = await Promise.all([
+        axios.get(`${API}/kick/channel/${channel}`).catch(e => ({ __error: e })),
         axios.get(`${API}/kick/clips/${channel}`, { params: { count: 3 } }),
       ]);
-      chatroomIdRef.current = chRes.data.chatroom_id;
+      if (!chSettled?.__error) {
+        chatroomIdRef.current = chSettled.data.chatroom_id;
+      }
       const list = clipRes.data.clips || [];
       if (list.length < 1) throw new Error("Klip bulunamadı");
-      // pad to 3 if channel has fewer
       while (list.length < 3) list.push({ ...list[0], id: `dup-${list.length}` });
       setClips(list.slice(0, 3));
       setPhase(PHASE.VOTING);
