@@ -51,12 +51,13 @@ function useQuery() {
     return {
       channel: (p.get("channel") || "").trim(),
       duration: Math.max(3, parseInt(p.get("duration") || "8", 10)),
+      chat: (p.get("chat") || "on").toLowerCase() !== "off",
     };
   }, []);
 }
 
 export default function ClipVoter() {
-  const { channel, duration } = useQuery();
+  const { channel, duration, chat: chatEnabled } = useQuery();
   const [phase, setPhase] = useState(PHASE.WAKING);
   const [errorMsg, setErrorMsg] = useState("");
   const [clips, setClips] = useState([]);
@@ -65,6 +66,7 @@ export default function ClipVoter() {
   const [winnerIdx, setWinnerIdx] = useState(null);
   const [videoProgress, setVideoProgress] = useState(0);
   const [chatStatus, setChatStatus] = useState("connecting");
+  const [chatFeed, setChatFeed] = useState([]);
 
   const votersRef = useRef(new Set()); // unique voter ids per round
   const votesRef = useRef({ 1: 0, 2: 0, 3: 0 });
@@ -82,6 +84,7 @@ export default function ClipVoter() {
     setWinnerIdx(null);
     setRemaining(duration);
     setVideoProgress(0);
+    setChatFeed([]);
   }, [duration]);
 
   // ---- Fetch channel meta + clips ----
@@ -142,8 +145,11 @@ export default function ClipVoter() {
           const payload = typeof msg.data === "string" ? JSON.parse(msg.data) : msg.data;
           const text = (payload?.content || "").trim();
           const userId = payload?.sender?.id || payload?.sender?.username;
+          const username = payload?.sender?.username || "user";
+          const color = payload?.sender?.identity?.color || "#ffffff";
           if (!userId || !text) return;
-          // Only count messages that are exactly 1, 2, or 3 (no leading exclamation)
+          // add to feed (last 12)
+          setChatFeed(prev => [...prev.slice(-11), { id: `${Date.now()}-${Math.random()}`, username, text, color }]);
           const m = text.match(/^([123])\s*$/);
           if (!m) return;
           if (votersRef.current.has(userId)) return;
@@ -404,6 +410,38 @@ export default function ClipVoter() {
               style={{ width: `${timeRatio * 100}%`, boxShadow: "0 0 10px #00ff9d" }}
             />
           </div>
+        </div>
+      )}
+
+      {/* ---------- LIVE CHAT OVERLAY (right side, VOTING only) ---------- */}
+      {chatEnabled && phase === PHASE.VOTING && (
+        <div data-testid="chat-overlay" className="absolute right-6 top-24 bottom-24 w-[280px] z-30 pointer-events-none flex flex-col justify-end gap-1.5 fade-in">
+          <div className="text-[10px] tracking-[0.4em] uppercase text-white/40 mono mb-1 pl-1">Canlı Sohbet</div>
+          {chatFeed.slice(-10).map((m) => {
+            const voteMatch = m.text.match(/^([123])\s*$/);
+            const isVote = !!voteMatch;
+            const voteColor = isVote
+              ? (voteMatch[1] === "1" ? "#00ff9d" : voteMatch[1] === "2" ? "#b445ff" : "#ffe14a")
+              : null;
+            return (
+              <div
+                key={m.id}
+                className="px-3 py-1.5 rounded-lg bg-black/55 backdrop-blur border text-sm truncate"
+                style={{
+                  borderColor: isVote ? `${voteColor}88` : "rgba(255,255,255,0.06)",
+                  boxShadow: isVote ? `0 0 12px -4px ${voteColor}` : "none",
+                }}
+              >
+                <span className="mono text-[11px] font-bold mr-2" style={{ color: m.color || "#7cffd0" }}>
+                  {m.username}
+                </span>
+                <span className={isVote ? "mono font-extrabold text-lg align-middle" : "text-white/85"}
+                      style={isVote ? { color: voteColor } : {}}>
+                  {m.text}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
 
