@@ -326,7 +326,10 @@ export default function ClipVoter() {
 
       {/* ---------- VOTING ---------- */}
       {phase === PHASE.VOTING && clips.length === 3 && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center px-8 gap-8 fade-in">
+        <div
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center px-8 gap-8 fade-in"
+          style={chatEnabled ? { paddingRight: 320 } : undefined}
+        >
 
           {/* Top title */}
           <div className="text-center">
@@ -415,7 +418,7 @@ export default function ClipVoter() {
 
       {/* ---------- LIVE CHAT OVERLAY (right side, VOTING only) ---------- */}
       {chatEnabled && phase === PHASE.VOTING && (
-        <div data-testid="chat-overlay" className="absolute right-6 top-24 bottom-24 w-[280px] z-30 pointer-events-none flex flex-col justify-end gap-1.5 fade-in">
+        <div data-testid="chat-overlay" className="absolute right-5 top-28 bottom-24 w-[270px] z-30 pointer-events-none flex flex-col justify-end gap-1.5 overflow-hidden fade-in">
           <div className="text-[10px] tracking-[0.4em] uppercase text-white/40 mono mb-1 pl-1">Canlı Sohbet</div>
           {chatFeed.slice(-10).map((m) => {
             const voteMatch = m.text.match(/^([123])\s*$/);
