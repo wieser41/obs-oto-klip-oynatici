@@ -147,9 +147,18 @@ export default function ClipVoter() {
           const userId = payload?.sender?.id || payload?.sender?.username;
           const username = payload?.sender?.username || "user";
           const color = payload?.sender?.identity?.color || "#ffffff";
+          const badges = payload?.sender?.identity?.badges || [];
+          const isPrivileged = badges.some(b => ["broadcaster", "moderator"].includes(b?.type));
           if (!userId || !text) return;
-          // add to feed (last 12)
           setChatFeed(prev => [...prev.slice(-11), { id: `${Date.now()}-${Math.random()}`, username, text, color }]);
+
+          // ---- Moderator/broadcaster commands ----
+          if (isPrivileged) {
+            const cmd = text.toLowerCase();
+            if (cmd === "!skip") { startNewRound(); return; }
+            if (cmd === "!reroll") { startNewRound(); return; }
+          }
+
           const m = text.match(/^([123])\s*$/);
           if (!m) return;
           if (votersRef.current.has(userId)) return;
