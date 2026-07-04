@@ -148,7 +148,11 @@ export default function ClipVoter() {
           const username = payload?.sender?.username || "user";
           const color = payload?.sender?.identity?.color || "#ffffff";
           const badges = payload?.sender?.identity?.badges || [];
-          const isPrivileged = badges.some(b => ["broadcaster", "moderator"].includes(b?.type));
+          const isBroadcaster = (username || "").toLowerCase() === (channel || "").toLowerCase();
+          const isPrivileged = isBroadcaster || badges.some(b => {
+            const key = (b?.type || b?.name || b?.text || b || "").toString().toLowerCase();
+            return ["broadcaster", "moderator", "mod", "owner"].some(k => key.includes(k));
+          });
           if (!userId || !text) return;
           setChatFeed(prev => [...prev.slice(-11), { id: `${Date.now()}-${Math.random()}`, username, text, color }]);
 
@@ -177,7 +181,7 @@ export default function ClipVoter() {
       try { ws.close(); } catch { /* noop */ }
       wsRef.current = null;
     };
-  }, [phase]);
+  }, [phase, channel, startNewRound]);
 
   // ---- Countdown timer ----
   useEffect(() => {
