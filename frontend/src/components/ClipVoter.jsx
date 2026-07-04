@@ -43,7 +43,6 @@ export default function ClipVoter() {
   const chatroomIdRef = useRef(null);
   const videoRef = useRef(null);
   const timerRef = useRef(null);
-  const rafRef = useRef(null);
 
   // ---- Reset round state ----
   const resetRound = useCallback(() => {
@@ -212,10 +211,8 @@ export default function ClipVoter() {
     startNewRound();
     return () => {
       clearInterval(timerRef.current);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [startNewRound]);
 
   const totalVotes = (votes[1] || 0) + (votes[2] || 0) + (votes[3] || 0);
   const pct = (n) => (totalVotes === 0 ? 0 : Math.round((votes[n] / totalVotes) * 100));
