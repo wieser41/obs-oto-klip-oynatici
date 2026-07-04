@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import axios from "axios";
 import Hls from "hls.js";
-import { Zap, Radio, Clock, Trophy, WifiOff } from "lucide-react";
+import { Zap, Radio, Trophy, WifiOff } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -215,8 +215,18 @@ export default function ClipVoter() {
   }, [startNewRound]);
 
   const totalVotes = (votes[1] || 0) + (votes[2] || 0) + (votes[3] || 0);
-  const pct = (n) => (totalVotes === 0 ? 0 : Math.round((votes[n] / totalVotes) * 100));
   const timeRatio = Math.max(0, Math.min(1, remaining / duration));
+
+  const formatDate = (iso) => {
+    if (!iso) return "";
+    try {
+      const d = new Date(iso);
+      return d.toLocaleString("tr-TR", {
+        day: "2-digit", month: "short", year: "numeric",
+        hour: "2-digit", minute: "2-digit",
+      });
+    } catch { return ""; }
+  };
 
   return (
     <div data-testid="clip-voter-root" className="relative w-screen h-screen overflow-hidden text-white">
@@ -272,128 +282,129 @@ export default function ClipVoter() {
 
       {/* ---------- VOTING ---------- */}
       {phase === PHASE.VOTING && clips.length === 3 && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center px-10 py-16">
-          <div className="w-full max-w-[1400px] grid grid-cols-[130px_1fr] gap-10 items-stretch fade-in">
+        <div className="absolute inset-0 z-20 flex flex-col items-center px-8 pt-14 pb-10 gap-10 fade-in">
 
-            {/* Vertical vote bars */}
-            <div data-testid="vote-bars" className="flex items-end justify-between h-[460px] px-2">
-              {[1, 2, 3].map((n, i) => {
-                const p = pct(n);
-                const styleClass = i === 0 ? "g" : i === 1 ? "p" : "b";
-                return (
-                  <div key={n} className="flex flex-col items-center gap-3 h-full">
-                    <div className="flex-1 flex items-end w-full">
-                      <div className="vote-track">
-                        <div
-                          className={`vote-fill ${styleClass}`}
-                          data-testid={`vote-fill-${n}`}
-                          style={{ height: `${p}%` }}
-                        />
-                      </div>
-                    </div>
-                    <div className="text-[11px] tracking-[0.25em] text-white/50 mono">#{n}</div>
-                    <div data-testid={`vote-pct-${n}`} className="mono text-sm font-bold text-white">
-                      {p}%
+          {/* Countdown + prompt */}
+          <div className="flex items-center gap-5 px-6 py-4 rounded-2xl border border-white/10 bg-black/50 backdrop-blur-md">
+            <div className="flex flex-col items-center leading-none">
+              <span data-testid="countdown-text" className="mono text-5xl font-extrabold text-[#00ff9d] tabular-nums" style={{ textShadow: "0 0 18px rgba(0,255,157,0.55)" }}>
+                {Math.ceil(remaining)}
+              </span>
+              <span className="text-[10px] tracking-[0.35em] uppercase text-white/50 mt-1">saniye</span>
+            </div>
+            <div className="h-14 w-px bg-white/10" />
+            <div>
+              <div className="text-xl md:text-2xl font-bold">
+                Chatte <span className="text-[#00ff9d]">1</span>, <span className="text-[#b445ff]">2</span> veya <span className="text-[#ffe14a]">3</span> yaz!
+              </div>
+              <div className="text-xs text-white/50 mt-1 tracking-wide">En çok oy alan klip oynatılacak</div>
+            </div>
+            <div className="h-14 w-px bg-white/10" />
+            <div className="flex items-center gap-2 text-xs mono text-white/70">
+              <Zap size={14} className="text-[#00ff9d]" />
+              <span data-testid="total-votes">{totalVotes} oy</span>
+            </div>
+          </div>
+
+          {/* 3 clip cards horizontally */}
+          <div data-testid="clip-grid" className="w-full max-w-[1400px] grid grid-cols-3 gap-8 flex-1 items-stretch">
+            {clips.map((c, idx) => {
+              const n = idx + 1;
+              const accent = n === 1 ? "#00ff9d" : n === 2 ? "#b445ff" : "#ffe14a";
+              return (
+                <div
+                  key={c.id || idx}
+                  data-testid={`clip-card-${n}`}
+                  className="rounded-2xl border border-white/8 bg-black/45 backdrop-blur overflow-hidden flex flex-col fade-in transition-transform hover:-translate-y-1"
+                  style={{ animationDelay: `${idx * 90}ms`, boxShadow: `0 0 24px -8px ${accent}55` }}
+                >
+                  <div className="relative aspect-video bg-black overflow-hidden">
+                    {c.thumbnail_url ? (
+                      <img src={c.thumbnail_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    ) : (
+                      <div className="w-full h-full bg-white/5" />
+                    )}
+                    <div className="absolute bottom-2 left-2 px-2 py-1 rounded-md bg-black/70 backdrop-blur text-[11px] mono uppercase tracking-wider">
+                      {(c.view_count || 0).toLocaleString("tr-TR")} Görüntülenme
                     </div>
                   </div>
-                );
-              })}
-            </div>
-
-            {/* Clip list */}
-            <div className="flex flex-col gap-4">
-              <div className="flex items-baseline justify-between">
-                <div>
-                  <div className="text-[10px] tracking-[0.45em] uppercase text-white/40">Oylama Aktif</div>
-                  <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-                    Chate <span className="text-[#00ff9d]">1</span>, <span className="text-[#b445ff]">2</span> veya <span className="text-[#ffe14a]">3</span> yaz
-                  </h1>
-                </div>
-                <div className="flex items-center gap-2 text-xs mono text-white/60">
-                  <Zap size={14} className="text-[#00ff9d]" />
-                  <span data-testid="total-votes">{totalVotes} oy</span>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                {clips.map((c, idx) => {
-                  const n = idx + 1;
-                  return (
-                    <div key={c.id || idx} data-testid={`clip-card-${n}`} className="clip-card fade-in" style={{ animationDelay: `${idx * 80}ms` }}>
-                      <div className={`badge-num n${n}`}>{n}</div>
-                      {c.thumbnail_url ? (
-                        <img
-                          src={c.thumbnail_url}
-                          alt=""
-                          className="w-32 h-[72px] object-cover rounded-md border border-white/10"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-32 h-[72px] rounded-md bg-white/5 border border-white/10" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm md:text-base font-semibold truncate">{c.title}</div>
-                        <div className="text-[11px] mono text-white/50 mt-1 flex gap-3 uppercase tracking-wider">
-                          {c.category && <span>{c.category}</span>}
-                          {typeof c.view_count === "number" && <span>{c.view_count.toLocaleString()} views</span>}
-                          {c.creator && <span>@{c.creator}</span>}
-                        </div>
-                      </div>
-                      <div data-testid={`clip-votes-${n}`} className="mono text-2xl font-bold w-16 text-right" style={{ color: n === 1 ? "#00ff9d" : n === 2 ? "#b445ff" : "#ffe14a" }}>
-                        {votes[n] || 0}
-                      </div>
+                  <div className="px-4 pt-3 pb-2 flex-1">
+                    <div className="text-base font-semibold truncate">{c.title}</div>
+                    <div className="text-[11px] mono text-white/50 mt-1 truncate">
+                      {c.creator ? `@${c.creator}` : ""}
+                      {c.created_at ? ` · ${formatDate(c.created_at)}` : ""}
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                  <div className="px-4 py-3 border-t border-white/8 flex items-center justify-between">
+                    <div className="mono text-4xl font-extrabold leading-none" style={{ color: accent, textShadow: `0 0 14px ${accent}77` }}>
+                      {n}
+                    </div>
+                    <div data-testid={`clip-votes-${n}`} className="mono text-sm font-bold" style={{ color: accent }}>
+                      {votes[n] || 0} oy
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-              {/* Countdown bar */}
-              <div className="mt-4 panel green px-5 py-3 flex items-center gap-4">
-                <Clock size={18} className="text-[#00ff9d]" />
-                <div className="flex-1 h-2 rounded-full bg-white/5 overflow-hidden">
-                  <div
-                    data-testid="countdown-bar"
-                    className="h-full bg-gradient-to-r from-[#00ff9d] via-[#7cffd0] to-[#b445ff] transition-[width] duration-100"
-                    style={{ width: `${timeRatio * 100}%` }}
-                  />
-                </div>
-                <div data-testid="countdown-text" className="mono text-lg font-bold text-[#00ff9d] tabular-nums w-20 text-right">
-                  {remaining.toFixed(1)}s
-                </div>
-              </div>
-            </div>
+          {/* Progress bar */}
+          <div className="w-full max-w-[1400px] h-1.5 rounded-full bg-white/5 overflow-hidden">
+            <div
+              data-testid="countdown-bar"
+              className="h-full bg-gradient-to-r from-[#00ff9d] via-[#7cffd0] to-[#b445ff] transition-[width] duration-100"
+              style={{ width: `${timeRatio * 100}%`, boxShadow: "0 0 10px #00ff9d" }}
+            />
           </div>
         </div>
       )}
 
-      {/* ---------- PLAYING ---------- */}
+      {/* ---------- PLAYING (windowed, not fullscreen) ---------- */}
       {phase === PHASE.PLAYING && winnerIdx !== null && clips[winnerIdx - 1] && (
-        <div data-testid="playing-screen" className="absolute inset-0 z-10">
-          <video
-            data-testid="winner-video"
-            ref={videoRef}
-            className="w-full h-full object-contain bg-black"
-            autoPlay
-            playsInline
-            controls={false}
-          />
+        <div data-testid="playing-screen" className="absolute inset-0 z-10 flex flex-col items-center justify-center px-10 py-16 gap-5">
 
           {/* winner banner */}
-          <div className="absolute top-6 left-1/2 -translate-x-1/2 fade-in flex items-center gap-3 px-5 py-2.5 rounded-full border border-[#00ff9d]/50 bg-black/60 backdrop-blur">
+          <div className="fade-in flex items-center gap-3 px-5 py-2.5 rounded-full border border-[#00ff9d]/50 bg-black/60 backdrop-blur">
             <Trophy size={16} className="text-[#00ff9d]" />
             <span className="text-xs tracking-[0.35em] uppercase text-white/70">Kazanan</span>
             <span className="mono font-bold text-[#00ff9d] text-lg">#{winnerIdx}</span>
-            <span className="max-w-[420px] truncate text-sm text-white/90">{clips[winnerIdx - 1].title}</span>
+            <span className="mono text-xs text-white/50">{(votes[winnerIdx] || 0)} oy</span>
           </div>
 
-          {/* video progress */}
-          <div className="absolute bottom-0 left-0 right-0 z-20">
-            <div className="h-1.5 bg-white/5">
+          {/* Centered video window */}
+          <div
+            className="relative rounded-2xl overflow-hidden border border-[#00ff9d]/40 bg-black fade-in"
+            style={{
+              width: "min(70vw, 1100px)",
+              aspectRatio: "16 / 9",
+              boxShadow: "0 0 42px -6px rgba(0,255,157,0.45), 0 0 42px -6px rgba(180,69,255,0.35)",
+            }}
+          >
+            <video
+              data-testid="winner-video"
+              ref={videoRef}
+              className="w-full h-full object-contain bg-black"
+              autoPlay
+              playsInline
+              controls={false}
+            />
+            {/* video progress inside the window */}
+            <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/50">
               <div
                 data-testid="video-progress"
                 className="h-full bg-gradient-to-r from-[#00ff9d] to-[#b445ff]"
-                style={{ width: `${videoProgress}%`, boxShadow: "0 0 12px #00ff9d" }}
+                style={{ width: `${videoProgress}%`, boxShadow: "0 0 10px #00ff9d" }}
               />
+            </div>
+          </div>
+
+          {/* Clip meta below the window */}
+          <div className="text-center max-w-3xl fade-in">
+            <div className="text-xl md:text-2xl font-bold truncate">{clips[winnerIdx - 1].title}</div>
+            <div className="text-xs text-white/50 mt-2 mono tracking-wider">
+              {clips[winnerIdx - 1].creator ? `@${clips[winnerIdx - 1].creator}` : ""}
+              {clips[winnerIdx - 1].category ? ` · ${clips[winnerIdx - 1].category}` : ""}
+              {clips[winnerIdx - 1].view_count ? ` · ${clips[winnerIdx - 1].view_count.toLocaleString("tr-TR")} görüntülenme` : ""}
             </div>
           </div>
         </div>
